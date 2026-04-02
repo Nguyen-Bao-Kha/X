@@ -40,7 +40,8 @@
   <input type="range" min="0" max="1" step="0.01"
          onchange="mainVideo.volume=this.value">
 </div>
-
+<progress id="uploadProgress" value="0" max="100"></progress>
+<div id="uploadText"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="app.js"></script>
 
