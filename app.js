@@ -56,6 +56,14 @@ cropper = new Cropper(img,{
 viewMode:1,
 dragMode:"move",
 autoCropArea:1,
+
+cropBoxMovable:false,
+cropBoxResizable:false,
+
+zoomable:true,
+scalable:false,
+
+background:false,
 responsive:true
 })
 
@@ -63,7 +71,16 @@ responsive:true
 
 reader.readAsDataURL(file)
 }
+ready(){
+const box = cropper.getCropBoxData()
 
+cropper.setCropBoxData({
+left: window.innerWidth/2 - 200,
+top: window.innerHeight/2 - 120,
+width: 400,
+height: 240
+})
+}
 /* THUMBNAIL */
 async function createThumbnail(file){
   return new Promise(resolve=>{
