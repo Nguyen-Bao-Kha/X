@@ -201,16 +201,23 @@ height:100%;
 object-fit:contain;
 }
 
-.cropper-container{
-width:100% !important;
-height:100% !important;
+#cropImg{
+max-width:100%;
+max-height:100vh;
+display:block;
 }
 
-.cropper-canvas,
-.cropper-wrap-box{
-width:100% !important;
-height:100% !important;
+.viewer{
+position:fixed;
+inset:0;
+background:black;
+display:none;
+justify-content:center;
+align-items:center;
+flex-direction:column;
+z-index:9999;
 }
+
 .crop-ok{
 position:fixed;
 bottom:20px;
