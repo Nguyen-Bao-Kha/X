@@ -37,6 +37,7 @@ function render(){
 
         const div = document.createElement("div");
         div.className = "video-item";
+        div.style.position = "relative";
 
         const img = document.createElement("img");
         img.src = v.thumb_url;
@@ -46,21 +47,21 @@ function render(){
 
         // Nút xóa
         const delBtn = document.createElement("div");
-        delBtn.className = "del-btn";
         delBtn.innerText = "✕";
         delBtn.style.position = "absolute";
         delBtn.style.top = "5px";
         delBtn.style.right = "5px";
         delBtn.style.background = "rgba(255,0,0,0.8)";
-        delBtn.style.borderRadius = "50%";
         delBtn.style.width = "25px";
         delBtn.style.height = "25px";
+        delBtn.style.borderRadius = "50%";
         delBtn.style.display = "none";
         delBtn.style.alignItems = "center";
         delBtn.style.justifyContent = "center";
         delBtn.style.color = "white";
         delBtn.style.cursor = "pointer";
-        div.style.position = "relative";
+        delBtn.style.fontSize = "16px";
+        delBtn.style.textAlign = "center";
         div.appendChild(delBtn);
 
         let preview;
@@ -79,30 +80,27 @@ function render(){
             delBtn.style.display = "none";
         };
 
-        // Xóa video
-        delBtn.onclick = async ()=>{
+        // Xóa video + thumbnail + DB
+        delBtn.onclick = async (e)=>{
+            e.stopPropagation(); // tránh trigger openViewer
             try {
-                const videoPath = v.video_url.split("/videos/")[1].split("?")[0];
-                const thumbPath = v.thumb_url.split("/thumbs/")[1].split("?")[0];
+                // Lấy tên file đúng bucket
+                const videoPath = decodeURIComponent(new URL(v.video_url).pathname.split("/videos/")[1]);
+                const thumbPath = decodeURIComponent(new URL(v.thumb_url).pathname.split("/thumbs/")[1]);
 
-                // Xóa storage
                 await sb.storage.from("videos").remove([videoPath]);
                 await sb.storage.from("thumbs").remove([thumbPath]);
-
-                // Xóa DB
                 await sb.from("videos").delete().eq("id", v.id);
 
-                // Load lại grid
-                await loadVideos();
+                await loadVideos(); // refresh grid
             } catch(err){
-                console.error("Delete error:", err);
+                console.error("Delete failed:", err);
             }
         };
 
         div.onclick = ()=>openViewer(i);
         grid.appendChild(div);
     });
-}
 }
 
 async function deleteVideo(id, videoPath, thumbPath){
