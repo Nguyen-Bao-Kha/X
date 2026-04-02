@@ -9,14 +9,22 @@ const bgInput = document.getElementById("bgInput");
 let videos = [];
 let current = 0;
 
-/* SPLASH */
-window.addEventListener("click", ()=>{
-    document.getElementById("splashSound").play().catch(()=>{});
-},{ once: true });
+/* SPLASH AUTO SOUND */
+const splashSound = document.getElementById("splashSound");
 
+function playSplashSound() {
+    splashSound.play().catch(()=>{
+        // fallback nếu browser chặn autoplay
+        window.addEventListener("click", ()=>splashSound.play(), { once: true });
+    });
+}
+
+window.addEventListener("load", playSplashSound);
+
+/* Ẩn splash sau 7 giây */
 setTimeout(()=>{
     document.getElementById("splash").style.display="none";
-},2500);
+}, 7500);
 
 /* BACKGROUND */
 if(localStorage.getItem("bg")){
@@ -71,7 +79,7 @@ async function loadVideos(){
     render();
 }
 
-/* RENDER (cập nhật với nút xóa) */
+/* RENDER (fix hiển thị nút xóa) */
 function render(){
     grid.innerHTML = "";
     videos.forEach((v,i)=>{
@@ -98,6 +106,7 @@ function render(){
         };
         div.appendChild(delBtn);
 
+        // Hover preview video
         let preview;
         div.onmouseenter = ()=>{
             preview = document.createElement("video");
@@ -105,15 +114,13 @@ function render(){
             preview.muted = true;
             preview.loop = true;
             preview.autoplay = true;
-            div.innerHTML="";
-            div.appendChild(preview);
-            div.appendChild(delBtn);
+
+            // chỉ replace img bằng video, giữ nút delete
+            div.replaceChild(preview, img);
         };
         div.onmouseleave = ()=>{
             if(preview) preview.pause();
-            div.innerHTML="";
-            div.appendChild(img);
-            div.appendChild(delBtn);
+            div.replaceChild(img, preview);
         };
 
         div.onclick = ()=>openViewer(i);
@@ -121,7 +128,27 @@ function render(){
     });
 }
 
-/* XÓA VID
+/* XÓA VID */
+async function deleteVideo(id, videoUrl, thumbUrl){
+    try{
+        // Lấy tên file từ URL
+        const videoName = videoUrl.split("/").pop().split("?")[0];
+        const thumbName = thumbUrl.split("/").pop().split("?")[0];
+
+        // Xóa video & thumb trên Storage
+        await sb.storage.from("videos").remove([videoName]);
+        await sb.storage.from("thumbs").remove([thumbName]);
+
+        // Xóa record DB
+        await sb.from("videos").delete().eq("id", id);
+
+        // Reload
+        loadVideos();
+    }catch(err){
+        console.error("Lỗi xóa video:", err);
+        alert("Xóa video thất bại: " + err.message);
+    }
+}
 
 /* RETRY */
 async function retryUpload(fn,retries=3){
