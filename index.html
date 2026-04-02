@@ -6,6 +6,8 @@
 
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.css">
+<script src="https://cdn.jsdelivr.net/npm/cropperjs"></script>
 
 <title>x</title>
 </head>
@@ -49,6 +51,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script src="app.js"></script>
-
+<div id="cropModal">
+  <img id="cropImage">
+  <div class="cropBtns">
+    <button onclick="applyCrop()">OK</button>
+    <button onclick="closeCrop()">Cancel</button>
+  </div>
+</div>
 </body>
 </html>
