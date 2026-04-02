@@ -3,8 +3,15 @@ body {
   background: #0a0a0a;
   color: white;
   font-family: sans-serif;
+
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+body {
+  position: relative;
+  z-index: 0;
 }
 
 #splash {
@@ -109,21 +116,25 @@ video {
   right: 20px;
   font-size: 30px;
 }
-/* FIX BODY */
-body {
-  position: relative;
-  z-index: 0;
-}
 
 /* OVERLAY */
 #bg-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.5);
-  z-index: -1;
-  transition: 0.2s;
+  z-index: 1;
+  pointer-events: none;
+  transition: background .2s;
 }
 
+#uploadProgress{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:4px;
+z-index:9999;
+}
 /* SLIDER */
 .brightness-control {
   position: fixed;
@@ -131,6 +142,14 @@ body {
   right: 20px;
   width: 120px;
   z-index: 10;
+}
+
+.grid,
+.btn,
+.viewer,
+.brightness-control {
+  position: relative;
+  z-index: 2;
 }
 
 .brightness-control input {
