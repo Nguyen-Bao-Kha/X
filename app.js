@@ -30,15 +30,15 @@ bgInput.onchange = e=>{
   const file = e.target.files[0];
   if(!file) return;
 
-  const reader = new FileReader();
-  reader.onload = ()=>{
-    const base64 = reader.result;
-    localStorage.setItem("bg", base64);
-    document.body.style.backgroundImage = `url(${base64})`;
-    document.body.style.backgroundSize="cover";
-    document.body.style.backgroundPosition="center";
-  };
-  reader.readAsDataURL(file);
+  const url = URL.createObjectURL(file);
+
+  localStorage.setItem("bg", url);
+
+  document.body.style.backgroundImage = `url(${url})`;
+  document.body.style.backgroundSize="cover";
+  document.body.style.backgroundPosition="center";
+  document.body.style.backgroundRepeat="no-repeat";
+  document.body.style.backgroundAttachment="fixed";
 };
 
 /* THUMBNAIL */
