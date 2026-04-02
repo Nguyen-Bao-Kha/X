@@ -22,6 +22,8 @@ setTimeout(()=>{
 /* BACKGROUND */
 if(localStorage.getItem("bg")){
   document.body.style.backgroundImage = `url(${localStorage.getItem("bg")})`;
+  document.body.style.backgroundSize="cover";
+  document.body.style.backgroundPosition="center";
 }
 
 bgInput.onchange = e=>{
@@ -33,6 +35,8 @@ bgInput.onchange = e=>{
     const base64 = reader.result;
     localStorage.setItem("bg", base64);
     document.body.style.backgroundImage = `url(${base64})`;
+    document.body.style.backgroundSize="cover";
+    document.body.style.backgroundPosition="center";
   };
   reader.readAsDataURL(file);
 };
@@ -111,7 +115,7 @@ function render(){
   });
 }
 
-/* RETRY UPLOAD */
+/* RETRY */
 async function retryUpload(fn, retries=3){
   for(let i=0;i<retries;i++){
     try{
@@ -151,8 +155,13 @@ async function handleUpload(file){
     })
   );
 
-  const videoUrl = sb.storage.from("videos").getPublicUrl(name+".mp4").data.publicUrl;
-  const thumbUrl = sb.storage.from("thumbs").getPublicUrl(name+".jpg").data.publicUrl;
+  const videoUrl = sb.storage
+    .from("videos")
+    .getPublicUrl(name+".mp4").data.publicUrl;
+
+  const thumbUrl = sb.storage
+    .from("thumbs")
+    .getPublicUrl(name+".jpg").data.publicUrl;
 
   await retryUpload(()=>sb.from("videos").insert([
     { video_url: videoUrl, thumb_url: thumbUrl }
@@ -208,6 +217,7 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.register("service-worker.js");
 }
 
+/* DARKNESS */
 const overlay = document.getElementById("bg-overlay");
 const slider = document.getElementById("darkness");
 
@@ -217,79 +227,6 @@ if(savedDark === null) savedDark = 0.5;
 overlay.style.background = `rgba(0,0,0,${savedDark})`;
 slider.value = savedDark;
 
-slider.oninput = (e)=>{
-  let val = e.target.value;
-  overlay.style.background = `rgba(0,0,0,${val})`;
-  localStorage.setItem("darkness", val);
-};
-
-  const videoUrl = supabase.storage.from("videos").getPublicUrl(name+".mp4").data.publicUrl;
-  const thumbUrl = supabase.storage.from("thumbs").getPublicUrl(name+".jpg").data.publicUrl;
-
-  await retryUpload(()=>supabase.from("videos").insert([
-    { video_url: videoUrl, thumb_url: thumbUrl }
-  ]));
-
-  loadVideos();
-}
-
-/* VIEWER */
-const viewer = document.getElementById("viewer");
-const mainVideo = document.getElementById("mainVideo");
-
-function openViewer(i){
-  current=i;
-  viewer.style.display="flex";
-  mainVideo.src=videos[i].video_url;
-}
-
-function next(){
-  current=(current+1)%videos.length;
-  mainVideo.src=videos[current].video_url;
-}
-
-function prev(){
-  current=(current-1+videos.length)%videos.length;
-  mainVideo.src=videos[current].video_url;
-}
-
-function closeViewer(){
-  mainVideo.pause();
-  viewer.style.display="none";
-}
-
-/* SWIPE */
-let startX=0;
-
-viewer.addEventListener("touchstart",e=>{
-  startX=e.touches[0].clientX;
-});
-
-viewer.addEventListener("touchend",e=>{
-  let endX=e.changedTouches[0].clientX;
-
-  if(startX-endX>50) next();
-  if(endX-startX>50) prev();
-});
-
-/* INIT */
-loadVideos();
-
-/* SW */
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register("service-worker.js");
-}
-const overlay = document.getElementById("bg-overlay");
-const slider = document.getElementById("darkness");
-
-/* LOAD SAVED */
-let savedDark = localStorage.getItem("darkness");
-if(savedDark === null) savedDark = 0.5;
-
-overlay.style.background = `rgba(0,0,0,${savedDark})`;
-slider.value = savedDark;
-
-/* CHANGE */
 slider.oninput = (e)=>{
   let val = e.target.value;
   overlay.style.background = `rgba(0,0,0,${val})`;
