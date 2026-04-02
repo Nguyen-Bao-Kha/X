@@ -20,7 +20,7 @@ setTimeout(()=>{
 
 /* BACKGROUND */
 if(localStorage.getItem("bg")){
-    document.body.style.backgroundImage = url(${localStorage.getItem("bg")});
+    document.body.style.backgroundImage = `url(${localStorage.getItem("bg")})`;
     document.body.style.backgroundSize="cover";
     document.body.style.backgroundPosition="center";
 }
@@ -29,15 +29,17 @@ bgInput.onchange = e=>{
   const file = e.target.files[0];
   if(!file) return;
 
-  const url = URL.createObjectURL(file);
-
-  localStorage.setItem("bg", url);
-
-  document.body.style.backgroundImage = `url(${url})`;
-  document.body.style.backgroundSize="cover";
-  document.body.style.backgroundPosition="center";
-  document.body.style.backgroundRepeat="no-repeat";
-  document.body.style.backgroundAttachment="fixed";
+  const reader = new FileReader();
+  reader.onload = ()=>{
+    const base64 = reader.result;
+    localStorage.setItem("bg", base64);
+    document.body.style.backgroundImage = `url(${base64})`;
+    document.body.style.backgroundSize="cover";
+    document.body.style.backgroundPosition="center";
+    document.body.style.backgroundRepeat="no-repeat";
+    document.body.style.backgroundAttachment="fixed";
+  };
+  reader.readAsDataURL(file);
 };
 
 /* THUMBNAIL */
@@ -136,7 +138,8 @@ async function handleUpload(file){
     const { error:thumbErr } = await sb.storage
       .from("thumbs")
       .upload(name+".jpg", thumbBlob, {
-        contentType: "image/jpeg"
+        contentType: "image/jpeg",
+        upsert: true
       });
 
     if(thumbErr) throw thumbErr;
@@ -145,13 +148,17 @@ async function handleUpload(file){
 
     /* VIDEO */
     text.innerText = "uploading video...";
-    const { error:videoErr } = await sb.storage
+    await sb.storage
       .from("videos")
       .upload(name+".mp4", file, {
-        contentType: file.type || "video/mp4"
+        contentType: file.type || "video/mp4",
+        upsert: true,
+        onUploadProgress: (event)=>{
+          const percent = Math.round((event.loaded / event.total) * 100);
+          progress.value = 30 + Math.round(percent * 0.5);
+          text.innerText = progress.value + "%";
+        }
       });
-
-    if(videoErr) throw videoErr;
 
     progress.value = 80;
 
@@ -230,10 +237,10 @@ const slider = document.getElementById("darkness");
 let savedDark = localStorage.getItem("darkness");
 if(savedDark === null) savedDark = 0.5;
 
-overlay.style.background = rgba(0,0,0,${savedDark});
+overlay.style.background = `rgba(0,0,0,${savedDark})`;
 slider.value = savedDark;
 slider.oninput = (e)=>{
     let val = e.target.value;
-    overlay.style.background = rgba(0,0,0,${val});
+    overlay.style.background = `rgba(0,0,0,${val})`;
     localStorage.setItem("darkness", val);
-};
+};;
