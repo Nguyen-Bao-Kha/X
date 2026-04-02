@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+
+<title>x</title>
+</head>
+
+<body>
+
+<div id="splash">
+  <div class="logo"><span>x</span></div>
+</div>
+
+<audio id="splashSound" src="assets/splash.mp3"></audio>
+
+<div class="grid" id="grid"></div>
+
+<input type="file" id="upload" accept="video/*" multiple hidden>
+<input type="file" id="bgInput" accept="image/*" hidden>
+
+<div class="btn upload" onclick="upload.click()">+</div>
+<div class="btn bg" onclick="bgInput.click()">🖼️</div>
+<div class="brightness-control">
+  <input type="range" id="darkness" min="0" max="0.85" step="0.05">
+</div>
+
+<div class="viewer" id="viewer">
+  <div class="close" onclick="closeViewer()">✕</div>
+  <div class="nav left" onclick="prev()">❮</div>
+
+  <video id="mainVideo" controls preload="none"></video>
+
+  <div class="nav right" onclick="next()">❯</div>
+
+  <input type="range" min="0" max="1" step="0.01"
+         onchange="mainVideo.volume=this.value">
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<script src="app.js"></script>
+
+</body>
+<div id="bg-overlay"></div>
+</html>
