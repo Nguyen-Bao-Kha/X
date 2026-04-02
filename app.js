@@ -138,36 +138,68 @@ upload.onchange = e=>{
 async function handleUpload(file){
   const name = Date.now()+"_"+Math.random().toString(36).slice(2);
 
-  const thumb = await createThumbnail(file);
-  const thumbBlob = await (await fetch(thumb)).blob();
+  const progress = document.getElementById("uploadProgress");
+  const text = document.getElementById("uploadText");
 
-  await retryUpload(()=>sb.storage
-    .from("thumbs")
-    .upload(name+".jpg", thumbBlob, {
-      contentType: "image/jpeg"
-    })
-  );
+  progress.style.display = "block";
+  progress.value = 0;
+  text.innerText = "0%";
 
-  await retryUpload(()=>sb.storage
-    .from("videos")
-    .upload(name+".mp4", file, {
-      contentType: file.type || "video/mp4"
-    })
-  );
+  try{
 
-  const videoUrl = sb.storage
-    .from("videos")
-    .getPublicUrl(name+".mp4").data.publicUrl;
+    /* THUMB */
+    text.innerText = "creating thumb...";
+    const thumb = await createThumbnail(file);
+    const thumbBlob = await (await fetch(thumb)).blob();
 
-  const thumbUrl = sb.storage
-    .from("thumbs")
-    .getPublicUrl(name+".jpg").data.publicUrl;
+    const { error:thumbErr } = await sb.storage
+      .from("thumbs")
+      .upload(name+".jpg", thumbBlob, {
+        contentType: "image/jpeg"
+      });
 
-  await retryUpload(()=>sb.from("videos").insert([
-    { video_url: videoUrl, thumb_url: thumbUrl }
-  ]));
+    if(thumbErr) throw thumbErr;
 
-  loadVideos();
+    progress.value = 30;
+
+    /* VIDEO */
+    text.innerText = "uploading video...";
+    const { error:videoErr } = await sb.storage
+      .from("videos")
+      .upload(name+".mp4", file, {
+        contentType: file.type || "video/mp4"
+      });
+
+    if(videoErr) throw videoErr;
+
+    progress.value = 80;
+
+    /* URL */
+    const videoUrl = sb.storage
+      .from("videos")
+      .getPublicUrl(name+".mp4").data.publicUrl;
+
+    const thumbUrl = sb.storage
+      .from("thumbs")
+      .getPublicUrl(name+".jpg").data.publicUrl;
+
+    /* DB */
+    const { error:dbErr } = await sb
+      .from("videos")
+      .insert([{ video_url: videoUrl, thumb_url: thumbUrl }]);
+
+    if(dbErr) throw dbErr;
+
+    progress.value = 100;
+    text.innerText = "done";
+
+    loadVideos();
+
+  }catch(err){
+    console.error(err);
+    text.innerText = "error";
+    alert("upload loi: "+err.message);
+  }
 }
 
 /* VIEWER */
