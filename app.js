@@ -9,22 +9,24 @@ const bgInput = document.getElementById("bgInput");
 let videos = [];
 let current = 0;
 
-/* SPLASH AUTO SOUND */
+/* SPLASH */
+const splash = document.getElementById("splash");
 const splashSound = document.getElementById("splashSound");
 
+// cố gắng play âm thanh ngay
 function playSplashSound() {
     splashSound.play().catch(()=>{
-        // fallback nếu browser chặn autoplay
+        // nếu browser chặn autoplay, click bất kỳ nơi nào sẽ play
         window.addEventListener("click", ()=>splashSound.play(), { once: true });
     });
 }
 
-window.addEventListener("load", playSplashSound);
-
-/* Ẩn splash sau 7 giây */
-setTimeout(()=>{
-    document.getElementById("splash").style.display="none";
-}, 7500);
+// show splash 7 giây
+window.addEventListener("load", ()=>{
+    splash.style.display = "flex";
+    playSplashSound();
+    setTimeout(()=>{ splash.style.display="none"; }, 7000);
+});
 
 /* BACKGROUND */
 if(localStorage.getItem("bg")){
