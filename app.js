@@ -50,8 +50,8 @@ function render(){
         delBtn.onclick = e=>{
             e.stopPropagation();
             // dùng đúng path trong bucket
-            const videoPath = v.video_url.split("/videos/")[1];
-            const thumbPath = v.thumb_url.split("/thumbs/")[1];
+            const videoPath = v.video_url.split("/videos/")[1].split("?")[0];
+            const thumbPath = v.thumb_url.split("/thumbs/")[1].split("?")[0];
             deleteVideo(v.id, videoPath, thumbPath);
         };
         div.appendChild(delBtn);
@@ -64,12 +64,13 @@ function render(){
             preview.loop = true;
             preview.autoplay = true;
             div.replaceChild(preview, img);
-            delBtn.style.display = "flex";
+
+            delBtn.style.display = "flex"; // show nút xóa
         };
         div.onmouseleave = ()=>{
             if(preview) preview.pause();
             div.replaceChild(img, preview);
-            delBtn.style.display = "none";
+            delBtn.style.display = "none"; // ẩn nút xóa
         };
 
         div.onclick = ()=>openViewer(i);
@@ -79,12 +80,17 @@ function render(){
 
 async function deleteVideo(id, videoPath, thumbPath){
     try {
+        // Xóa video & thumb trong storage
         await sb.storage.from("videos").remove([videoPath]);
         await sb.storage.from("thumbs").remove([thumbPath]);
+
+        // Xóa DB
         await sb.from("videos").delete().eq("id", id);
+
+        // Reload lại grid
         await loadVideos();
     } catch(err){
-        console.error("Delete error:", err); // chỉ log console, không alert
+        console.error("Delete error:", err); // chỉ log, không alert
     }
 }
 
