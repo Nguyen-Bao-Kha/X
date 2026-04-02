@@ -29,11 +29,12 @@ window.addEventListener("load", ()=>{
     }, 7000);
 });
 
-/* RENDER + HOVER + XÓA */
+// Hover hiện nút xóa
 function render(){
     grid.innerHTML = "";
     videos.forEach((v,i)=>{
         if(!v.thumb_url) return;
+
         const div = document.createElement("div");
         div.className = "video-item";
 
@@ -43,17 +44,23 @@ function render(){
         img.loading = "lazy";
         div.appendChild(img);
 
+        // Nút xóa
         const delBtn = document.createElement("div");
+        delBtn.className = "del-btn";
         delBtn.innerText = "✕";
-        delBtn.className = "delete-btn";
+        delBtn.style.position = "absolute";
+        delBtn.style.top = "5px";
+        delBtn.style.right = "5px";
+        delBtn.style.background = "rgba(255,0,0,0.8)";
+        delBtn.style.borderRadius = "50%";
+        delBtn.style.width = "25px";
+        delBtn.style.height = "25px";
         delBtn.style.display = "none";
-        delBtn.onclick = e=>{
-            e.stopPropagation();
-            // dùng đúng path trong bucket
-            const videoPath = v.video_url.split("/videos/")[1].split("?")[0];
-            const thumbPath = v.thumb_url.split("/thumbs/")[1].split("?")[0];
-            deleteVideo(v.id, videoPath, thumbPath);
-        };
+        delBtn.style.alignItems = "center";
+        delBtn.style.justifyContent = "center";
+        delBtn.style.color = "white";
+        delBtn.style.cursor = "pointer";
+        div.style.position = "relative";
         div.appendChild(delBtn);
 
         let preview;
@@ -63,19 +70,39 @@ function render(){
             preview.muted = true;
             preview.loop = true;
             preview.autoplay = true;
-            div.replaceChild(preview, img);
-
-            delBtn.style.display = "flex"; // show nút xóa
+            div.replaceChild(preview,img);
+            delBtn.style.display = "flex";
         };
         div.onmouseleave = ()=>{
             if(preview) preview.pause();
-            div.replaceChild(img, preview);
-            delBtn.style.display = "none"; // ẩn nút xóa
+            div.replaceChild(img,preview);
+            delBtn.style.display = "none";
+        };
+
+        // Xóa video
+        delBtn.onclick = async ()=>{
+            try {
+                const videoPath = v.video_url.split("/videos/")[1].split("?")[0];
+                const thumbPath = v.thumb_url.split("/thumbs/")[1].split("?")[0];
+
+                // Xóa storage
+                await sb.storage.from("videos").remove([videoPath]);
+                await sb.storage.from("thumbs").remove([thumbPath]);
+
+                // Xóa DB
+                await sb.from("videos").delete().eq("id", v.id);
+
+                // Load lại grid
+                await loadVideos();
+            } catch(err){
+                console.error("Delete error:", err);
+            }
         };
 
         div.onclick = ()=>openViewer(i);
         grid.appendChild(div);
     });
+}
 }
 
 async function deleteVideo(id, videoPath, thumbPath){
