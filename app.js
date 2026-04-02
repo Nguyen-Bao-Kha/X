@@ -23,23 +23,25 @@ if(localStorage.getItem("bg")){
     document.body.style.backgroundImage = `url(${localStorage.getItem("bg")})`;
     document.body.style.backgroundSize="cover";
     document.body.style.backgroundPosition="center";
+    document.body.style.backgroundRepeat="no-repeat";
+    document.body.style.backgroundAttachment="fixed";
 }
 
 bgInput.onchange = e=>{
-  const file = e.target.files[0];
-  if(!file) return;
+    const file = e.target.files[0];
+    if(!file) return;
 
-  const reader = new FileReader();
-  reader.onload = ()=>{
-    const base64 = reader.result;
-    localStorage.setItem("bg", base64);
-    document.body.style.backgroundImage = `url(${base64})`;
-    document.body.style.backgroundSize="cover";
-    document.body.style.backgroundPosition="center";
-    document.body.style.backgroundRepeat="no-repeat";
-    document.body.style.backgroundAttachment="fixed";
-  };
-  reader.readAsDataURL(file);
+    const reader = new FileReader();
+    reader.onload = ()=>{
+        const base64 = reader.result;
+        localStorage.setItem("bg", base64);
+        document.body.style.backgroundImage = `url(${base64})`;
+        document.body.style.backgroundSize="cover";
+        document.body.style.backgroundPosition="center";
+        document.body.style.backgroundRepeat="no-repeat";
+        document.body.style.backgroundAttachment="fixed";
+    };
+    reader.readAsDataURL(file);
 };
 
 /* THUMBNAIL */
@@ -119,75 +121,62 @@ upload.onchange = e=>{
 };
 
 async function handleUpload(file){
-  const name = Date.now()+"_"+Math.random().toString(36).slice(2);
+    const name = Date.now()+"_"+Math.random().toString(36).slice(2);
 
-  const progress = document.getElementById("uploadProgress");
-  const text = document.getElementById("uploadText");
+    const progress = document.getElementById("uploadProgress");
+    const text = document.getElementById("uploadText");
 
-  progress.style.display = "block";
-  progress.value = 0;
-  text.innerText = "0%";
+    progress.style.display = "block";
+    progress.value = 0;
+    text.innerText = "0%";
 
-  try{
+    try{
+        /* THUMB */
+        text.innerText = "creating thumb...";
+        const thumb = await createThumbnail(file);
+        const thumbBlob = await (await fetch(thumb)).blob();
 
-    /* THUMB */
-    text.innerText = "creating thumb...";
-    const thumb = await createThumbnail(file);
-    const thumbBlob = await (await fetch(thumb)).blob();
+        await retryUpload(()=>{
+            return sb.storage
+                .from("thumbs")
+                .upload(name+".jpg", thumbBlob, { contentType: "image/jpeg", upsert: true });
+        });
+        progress.value = 30;
+        text.innerText = "30%";
 
-    const { error:thumbErr } = await sb.storage
-      .from("thumbs")
-      .upload(name+".jpg", thumbBlob, {
-        contentType: "image/jpeg",
-        upsert: true
-      });
+        /* VIDEO */
+        text.innerText = "uploading video...";
+        await retryUpload(()=>{
+            return sb.storage
+                .from("videos")
+                .upload(name+".mp4", file, { contentType: file.type || "video/mp4", upsert: true });
+        });
+        progress.value = 80;
+        text.innerText = "80%";
 
-    if(thumbErr) throw thumbErr;
+        /* URL */
+        const videoUrl = sb.storage
+            .from("videos")
+            .getPublicUrl(name+".mp4").data.publicUrl;
 
-    progress.value = 30;
+        const thumbUrl = sb.storage
+            .from("thumbs")
+            .getPublicUrl(name+".jpg").data.publicUrl;
 
-    /* VIDEO */
-    text.innerText = "uploading video...";
-    await sb.storage
-      .from("videos")
-      .upload(name+".mp4", file, {
-        contentType: file.type || "video/mp4",
-        upsert: true,
-        onUploadProgress: (event)=>{
-          const percent = Math.round((event.loaded / event.total) * 100);
-          progress.value = 30 + Math.round(percent * 0.5);
-          text.innerText = progress.value + "%";
-        }
-      });
+        /* DB */
+        await retryUpload(()=>{
+            return sb.from("videos").insert([{ video_url: videoUrl, thumb_url: thumbUrl }]);
+        });
+        progress.value = 100;
+        text.innerText = "done";
 
-    progress.value = 80;
+        loadVideos();
 
-    /* URL */
-    const videoUrl = sb.storage
-      .from("videos")
-      .getPublicUrl(name+".mp4").data.publicUrl;
-
-    const thumbUrl = sb.storage
-      .from("thumbs")
-      .getPublicUrl(name+".jpg").data.publicUrl;
-
-    /* DB */
-    const { error:dbErr } = await sb
-      .from("videos")
-      .insert([{ video_url: videoUrl, thumb_url: thumbUrl }]);
-
-    if(dbErr) throw dbErr;
-
-    progress.value = 100;
-    text.innerText = "done";
-
-    loadVideos();
-
-  }catch(err){
-    console.error(err);
-    text.innerText = "error";
-    alert("upload loi: "+err.message);
-  }
+    }catch(err){
+        console.error(err);
+        text.innerText = "error";
+        alert("upload loi: "+err.message);
+    }
 }
 
 /* VIEWER */
@@ -243,4 +232,4 @@ slider.oninput = (e)=>{
     let val = e.target.value;
     overlay.style.background = `rgba(0,0,0,${val})`;
     localStorage.setItem("darkness", val);
-};;
+};
