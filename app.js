@@ -122,9 +122,7 @@ function render(){
         delBtn.style.display = "none"; // ẩn mặc định
         delBtn.onclick = (e)=>{
             e.stopPropagation();
-            if(confirm("Xóa video này?")){
-                deleteVideo(v.id, v.video_url, v.thumb_url);
-            }
+            deleteVideo(v.id, v.video_url.split("/").pop(), v.thumb_url.split("/").pop());
         };
         div.appendChild(delBtn);
 
@@ -133,16 +131,14 @@ function render(){
     });
 }
 
-/* XÓA VIDEO */
-async function deleteVideo(id, videoUrl, thumbUrl){
+/* XÓA VIDEO CHUẨN */
+async function deleteVideo(id, videoName, thumbName){
     try {
         // xóa video trong storage
-        const videoPath = videoUrl.split("/storage/v1/object/public/")[1];
-        await sb.storage.from("videos").remove([videoPath]);
+        await sb.storage.from("videos").remove([videoName]);
 
         // xóa thumbnail
-        const thumbPath = thumbUrl.split("/storage/v1/object/public/")[1];
-        await sb.storage.from("thumbs").remove([thumbPath]);
+        await sb.storage.from("thumbs").remove([thumbName]);
 
         // xóa database
         await sb.from("videos").delete().eq("id", id);
