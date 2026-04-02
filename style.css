@@ -81,6 +81,7 @@ video {
   align-items: center;
   justify-content: center;
   font-size: 26px;
+  z-index: 5;
 }
 
 .upload { right: 20px; }
@@ -145,7 +146,6 @@ z-index:9999;
 }
 
 .grid,
-.btn,
 .viewer,
 .brightness-control {
   position: relative;
