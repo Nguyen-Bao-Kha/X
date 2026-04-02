@@ -44,7 +44,6 @@ let img = document.getElementById("cropImg")
 if(!img){
 img = document.createElement("img")
 img.id="cropImg"
-img.style.maxWidth="90%"
 viewer.appendChild(img)
 }
 
@@ -52,19 +51,18 @@ img.src = reader.result
 
 if(cropper) cropper.destroy()
 
-cropper = new Cropper(img,{
-viewMode:1,
-dragMode:"move",
-autoCropArea:1,
+// 👇 lấy tỉ lệ màn hình thiết bị
+const ratio = window.innerWidth / window.innerHeight
 
+cropper = new Cropper(img,{
+aspectRatio: ratio,     // đúng tỉ lệ màn hình
+viewMode: 3,            // fill full khung
+dragMode:"move",
 cropBoxMovable:false,
 cropBoxResizable:false,
-
 zoomable:true,
-scalable:false,
-
-background:false,
-responsive:true
+responsive:true,
+autoCropArea:1
 })
 
 }
