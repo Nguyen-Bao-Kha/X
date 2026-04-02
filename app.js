@@ -26,20 +26,43 @@ if(localStorage.getItem("bg")){
   document.body.style.backgroundPosition="center";
 }
 
-bgInput.onchange = e=>{
-  const file = e.target.files[0];
-  if(!file) return;
+let cropper
 
-  const url = URL.createObjectURL(file);
+bgInput.onchange = e => {
+const file = e.target.files[0]
+if(!file) return
 
-  localStorage.setItem("bg", url);
+const reader = new FileReader()
 
-  document.body.style.backgroundImage = `url(${url})`;
-  document.body.style.backgroundSize="cover";
-  document.body.style.backgroundPosition="center";
-  document.body.style.backgroundRepeat="no-repeat";
-  document.body.style.backgroundAttachment="fixed";
-};
+reader.onload = () => {
+
+viewer.style.display="flex"
+mainVideo.style.display="none"
+
+let img = document.getElementById("cropImg")
+
+if(!img){
+img = document.createElement("img")
+img.id="cropImg"
+img.style.maxWidth="90%"
+viewer.appendChild(img)
+}
+
+img.src = reader.result
+
+if(cropper) cropper.destroy()
+
+cropper = new Cropper(img,{
+viewMode:1,
+dragMode:"move",
+autoCropArea:1,
+responsive:true
+})
+
+}
+
+reader.readAsDataURL(file)
+}
 
 /* THUMBNAIL */
 async function createThumbnail(file){
@@ -60,7 +83,43 @@ async function createThumbnail(file){
     };
   });
 }
+let cropper
 
+bgInput.onchange = e => {
+const file = e.target.files[0]
+if(!file) return
+
+const reader = new FileReader()
+
+reader.onload = () => {
+
+viewer.style.display="flex"
+mainVideo.style.display="none"
+
+let img = document.getElementById("cropImg")
+
+if(!img){
+img = document.createElement("img")
+img.id="cropImg"
+img.style.maxWidth="90%"
+viewer.appendChild(img)
+}
+
+img.src = reader.result
+
+if(cropper) cropper.destroy()
+
+cropper = new Cropper(img,{
+viewMode:1,
+dragMode:"move",
+autoCropArea:1,
+responsive:true
+})
+
+}
+
+reader.readAsDataURL(file)
+}
 /* LOAD */
 async function loadVideos(){
   const { data } = await sb
