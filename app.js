@@ -71,18 +71,32 @@ async function loadVideos(){
     render();
 }
 
-/* RENDER */
+/* RENDER (cập nhật với nút xóa) */
 function render(){
     grid.innerHTML = "";
     videos.forEach((v,i)=>{
         if(!v.thumb_url) return;
         const div = document.createElement("div");
         div.className = "video-item";
+
+        // Thumbnail
         const img = document.createElement("img");
         img.src = v.thumb_url;
         img.className = "thumb";
         img.loading = "lazy";
         div.appendChild(img);
+
+        // Nút xóa
+        const delBtn = document.createElement("div");
+        delBtn.innerText = "✕";
+        delBtn.className = "delete-btn";
+        delBtn.onclick = (e)=>{
+            e.stopPropagation(); // tránh click mở viewer
+            if(confirm("Xóa video này?")){
+                deleteVideo(v.id, v.video_url, v.thumb_url);
+            }
+        };
+        div.appendChild(delBtn);
 
         let preview;
         div.onmouseenter = ()=>{
@@ -93,16 +107,21 @@ function render(){
             preview.autoplay = true;
             div.innerHTML="";
             div.appendChild(preview);
+            div.appendChild(delBtn);
         };
         div.onmouseleave = ()=>{
             if(preview) preview.pause();
             div.innerHTML="";
             div.appendChild(img);
+            div.appendChild(delBtn);
         };
+
         div.onclick = ()=>openViewer(i);
         grid.appendChild(div);
     });
 }
+
+/* XÓA VID
 
 /* RETRY */
 async function retryUpload(fn,retries=3){
