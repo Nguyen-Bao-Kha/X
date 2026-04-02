@@ -26,12 +26,11 @@ setTimeout(()=>{
 /* BACKGROUND LOAD */
 if(localStorage.getItem("bg")){
   document.body.style.backgroundImage = `url(${localStorage.getItem("bg")})`;
-  document.body.style.backgroundSize="cover";
-  document.body.style.backgroundPosition="center";
 }
 
 /* BACKGROUND PICK + CROP */
 bgInput.onchange = e => {
+
 const file = e.target.files[0]
 if(!file) return
 
@@ -47,12 +46,12 @@ let img = document.getElementById("cropImg")
 if(!img){
 img = document.createElement("img")
 img.id="cropImg"
-img.style.maxWidth="90%"
-img.style.maxHeight="80%"
 viewer.appendChild(img)
 }
 
 img.src = reader.result
+
+setTimeout(()=>{
 
 if(cropper){
 cropper.destroy()
@@ -63,15 +62,19 @@ const ratio = window.innerWidth / window.innerHeight
 
 cropper = new Cropper(img,{
 aspectRatio: ratio,
-viewMode:3,
+viewMode:1,
 dragMode:"move",
-cropBoxMovable:false,
-cropBoxResizable:false,
-zoomable:true,
 autoCropArea:1,
 responsive:true,
-background:false
+background:false,
+movable:true,
+zoomable:true,
+scalable:true,
+cropBoxMovable:false,
+cropBoxResizable:false
 })
+
+},100)
 
 }
 
@@ -88,12 +91,27 @@ width: window.innerWidth,
 height: window.innerHeight
 })
 
-const img = canvas.toDataURL("image/jpeg")
+const img = canvas.toDataURL("image/jpeg",0.9)
 
 document.body.style.backgroundImage=`url(${img})`
 localStorage.setItem("bg",img)
 
 closeViewer()
+
+if(cropper){
+cropper.destroy()
+cropper=null
+}
+}
+
+/* CLOSE CROP */
+function closeCrop(){
+closeViewer()
+
+if(cropper){
+cropper.destroy()
+cropper=null
+}
 }
 
 /* THUMBNAIL */
