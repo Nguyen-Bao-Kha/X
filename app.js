@@ -20,9 +20,13 @@ function playSplashSound() {
 }
 
 window.addEventListener("load", ()=>{
+    console.log("Splash start");
     splash.style.display = "flex";
-    playSplashSound();
-    setTimeout(()=>{ splash.style.display="none"; }, 7000);
+    splashSound.play().catch(()=>console.log("Autoplay blocked"));
+    setTimeout(()=>{ 
+        splash.style.display="none"; 
+        console.log("Splash end"); 
+    }, 7000);
 });
 
 /* RENDER + HOVER + XÓA */
@@ -73,7 +77,6 @@ function render(){
     });
 }
 
-/* DELETE VIDEO chuẩn */
 async function deleteVideo(id, videoPath, thumbPath){
     try {
         await sb.storage.from("videos").remove([videoPath]);
@@ -81,7 +84,7 @@ async function deleteVideo(id, videoPath, thumbPath){
         await sb.from("videos").delete().eq("id", id);
         await loadVideos();
     } catch(err){
-        console.error("Delete error:", err);
+        console.error("Delete error:", err); // chỉ log console, không alert
     }
 }
 
