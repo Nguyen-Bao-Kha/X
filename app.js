@@ -79,7 +79,7 @@ async function loadVideos(){
     render();
 }
 
-/* RENDER (fix hiển thị nút xóa) */
+/* RENDER (nút xóa chỉ hiện khi hover) */
 function render(){
     grid.innerHTML = "";
     videos.forEach((v,i)=>{
@@ -94,18 +94,6 @@ function render(){
         img.loading = "lazy";
         div.appendChild(img);
 
-        // Nút xóa
-        const delBtn = document.createElement("div");
-        delBtn.innerText = "✕";
-        delBtn.className = "delete-btn";
-        delBtn.onclick = (e)=>{
-            e.stopPropagation(); // tránh click mở viewer
-            if(confirm("Xóa video này?")){
-                deleteVideo(v.id, v.video_url, v.thumb_url);
-            }
-        };
-        div.appendChild(delBtn);
-
         // Hover preview video
         let preview;
         div.onmouseenter = ()=>{
@@ -114,14 +102,31 @@ function render(){
             preview.muted = true;
             preview.loop = true;
             preview.autoplay = true;
-
-            // chỉ replace img bằng video, giữ nút delete
             div.replaceChild(preview, img);
+
+            // Khi hover, show delete button
+            delBtn.style.display = "flex";
         };
         div.onmouseleave = ()=>{
             if(preview) preview.pause();
             div.replaceChild(img, preview);
+
+            // Khi rời, ẩn delete button
+            delBtn.style.display = "none";
         };
+
+        // Nút xóa (ẩn mặc định)
+        const delBtn = document.createElement("div");
+        delBtn.innerText = "✕";
+        delBtn.className = "delete-btn";
+        delBtn.style.display = "none"; // ẩn mặc định
+        delBtn.onclick = (e)=>{
+            e.stopPropagation();
+            if(confirm("Xóa video này?")){
+                deleteVideo(v.id, v.video_url, v.thumb_url);
+            }
+        };
+        div.appendChild(delBtn);
 
         div.onclick = ()=>openViewer(i);
         grid.appendChild(div);
