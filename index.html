@@ -2,15 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs/dist/cropper.min.css">
 <script src="https://cdn.jsdelivr.net/npm/cropperjs"></script>
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
-<title>x</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+<title>Video App</title>
 </head>
 
 <body>
@@ -28,36 +27,36 @@ href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
 <input type="file" id="upload" accept="video/*" multiple hidden>
 <input type="file" id="bgInput" accept="image/*" hidden>
 
-<div class="btn upload" onclick="upload.click()">+</div>
-<div class="btn bg" onclick="bgInput.click()">🖼️</div>
+<div class="btn upload" onclick="window.upload.click()">+</div>
+<div class="btn bg" onclick="window.bgInput.click()">🖼️</div>
 
 <div class="brightness-control">
-  <input type="range" id="darkness" min="0" max="0.85" step="0.05">
+  <input type="range" id="darkness" min="0" max="0.85" step="0.05" value="0.5">
 </div>
 
-<div class="viewer" id="viewer">
+<div class="viewer" id="videoViewer">
   <div class="close" onclick="closeViewer()">✕</div>
   <div class="nav left" onclick="prev()">❮</div>
-
   <video id="mainVideo" controls preload="none"></video>
-
   <div class="nav right" onclick="next()">❯</div>
+  <input type="range" min="0" max="1" step="0.01" id="volumeSlider" onchange="mainVideo.volume=this.value">
+</div>
 
-  <input type="range" min="0" max="1" step="0.01"
-         onchange="mainVideo.volume=this.value">
+<!-- Crop Modal riêng biệt -->
+<div id="cropModal">
+  <div class="close-crop" onclick="closeCrop()">✕</div>
+  <img id="cropImage">
+  <div class="cropBtns">
+    <button class="crop-ok" onclick="applyCrop()">✓ Áp dụng</button>
+    <button class="crop-cancel" onclick="closeCrop()">✗ Hủy</button>
+  </div>
 </div>
 
 <progress id="uploadProgress" value="0" max="100"></progress>
 <div id="uploadText"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
-<div id="cropModal">
-  <img id="cropImage">
-  <div class="cropBtns">
-    <button class="crop-ok" onclick="applyCrop()">OK</button>
-    <button class="crop-ok" style="bottom:70px" onclick="closeCrop()">Cancel</button>
-  </div>
-</div>
 </body>
 </html>
