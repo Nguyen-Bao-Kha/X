@@ -133,25 +133,24 @@ function render(){
     });
 }
 
-/* XÓA VID */
+/* XÓA VIDEO */
 async function deleteVideo(id, videoUrl, thumbUrl){
-    try{
-        // Lấy tên file từ URL
-        const videoName = videoUrl.split("/").pop().split("?")[0];
-        const thumbName = thumbUrl.split("/").pop().split("?")[0];
+    try {
+        // xóa video trong storage
+        const videoPath = videoUrl.split("/storage/v1/object/public/")[1];
+        await sb.storage.from("videos").remove([videoPath]);
 
-        // Xóa video & thumb trên Storage
-        await sb.storage.from("videos").remove([videoName]);
-        await sb.storage.from("thumbs").remove([thumbName]);
+        // xóa thumbnail
+        const thumbPath = thumbUrl.split("/storage/v1/object/public/")[1];
+        await sb.storage.from("thumbs").remove([thumbPath]);
 
-        // Xóa record DB
+        // xóa database
         await sb.from("videos").delete().eq("id", id);
 
-        // Reload
-        loadVideos();
-    }catch(err){
-        console.error("Lỗi xóa video:", err);
-        alert("Xóa video thất bại: " + err.message);
+        // reload danh sách
+        await loadVideos();
+    } catch(err){
+        console.error("Delete error:", err);
     }
 }
 
