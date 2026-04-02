@@ -7,8 +7,12 @@ const grid = document.getElementById("grid");
 const upload = document.getElementById("upload");
 const bgInput = document.getElementById("bgInput");
 
+const viewer = document.getElementById("viewer");
+const mainVideo = document.getElementById("mainVideo");
+
 let videos = [];
 let current = 0;
+let cropper = null;
 
 /* SPLASH */
 window.addEventListener("click", ()=>{
@@ -19,15 +23,14 @@ setTimeout(()=>{
   document.getElementById("splash").style.display="none";
 },2500);
 
-/* BACKGROUND */
+/* BACKGROUND LOAD */
 if(localStorage.getItem("bg")){
   document.body.style.backgroundImage = `url(${localStorage.getItem("bg")})`;
   document.body.style.backgroundSize="cover";
   document.body.style.backgroundPosition="center";
 }
 
-let cropper
-
+/* BACKGROUND PICK + CROP */
 bgInput.onchange = e => {
 const file = e.target.files[0]
 if(!file) return
@@ -44,41 +47,55 @@ let img = document.getElementById("cropImg")
 if(!img){
 img = document.createElement("img")
 img.id="cropImg"
+img.style.maxWidth="90%"
+img.style.maxHeight="80%"
 viewer.appendChild(img)
 }
 
 img.src = reader.result
 
-if(cropper) cropper.destroy()
+if(cropper){
+cropper.destroy()
+cropper = null
+}
 
-// 👇 lấy tỉ lệ màn hình thiết bị
 const ratio = window.innerWidth / window.innerHeight
 
 cropper = new Cropper(img,{
-aspectRatio: ratio,     // đúng tỉ lệ màn hình
-viewMode: 3,            // fill full khung
+aspectRatio: ratio,
+viewMode:3,
 dragMode:"move",
 cropBoxMovable:false,
 cropBoxResizable:false,
 zoomable:true,
+autoCropArea:1,
 responsive:true,
-autoCropArea:1
+background:false
 })
 
 }
 
 reader.readAsDataURL(file)
 }
-ready(){
-const box = cropper.getCropBoxData()
 
-cropper.setCropBoxData({
-left: window.innerWidth/2 - 200,
-top: window.innerHeight/2 - 120,
-width: 400,
-height: 240
+/* APPLY CROP */
+function applyCrop(){
+
+if(!cropper) return
+
+const canvas = cropper.getCroppedCanvas({
+width: window.innerWidth,
+height: window.innerHeight
 })
+
+const img = canvas.toDataURL("image/jpeg")
+
+document.body.style.backgroundImage=`url(${img})`
+localStorage.setItem("bg",img)
+
+closeViewer()
 }
+
 /* THUMBNAIL */
 async function createThumbnail(file){
   return new Promise(resolve=>{
@@ -98,43 +115,7 @@ async function createThumbnail(file){
     };
   });
 }
-let cropper
 
-bgInput.onchange = e => {
-const file = e.target.files[0]
-if(!file) return
-
-const reader = new FileReader()
-
-reader.onload = () => {
-
-viewer.style.display="flex"
-mainVideo.style.display="none"
-
-let img = document.getElementById("cropImg")
-
-if(!img){
-img = document.createElement("img")
-img.id="cropImg"
-img.style.maxWidth="90%"
-viewer.appendChild(img)
-}
-
-img.src = reader.result
-
-if(cropper) cropper.destroy()
-
-cropper = new Cropper(img,{
-viewMode:1,
-dragMode:"move",
-autoCropArea:1,
-responsive:true
-})
-
-}
-
-reader.readAsDataURL(file)
-}
 /* LOAD */
 async function loadVideos(){
   const { data } = await sb
@@ -189,17 +170,6 @@ function render(){
   });
 }
 
-/* RETRY */
-async function retryUpload(fn, retries=3){
-  for(let i=0;i<retries;i++){
-    try{
-      return await fn();
-    }catch(e){
-      if(i===retries-1) throw e;
-    }
-  }
-}
-
 /* QUEUE */
 let queue = Promise.resolve();
 
@@ -210,6 +180,7 @@ upload.onchange = e=>{
 };
 
 async function handleUpload(file){
+
   const name = Date.now()+"_"+Math.random().toString(36).slice(2);
 
   const progress = document.getElementById("uploadProgress");
@@ -221,48 +192,35 @@ async function handleUpload(file){
 
   try{
 
-    /* THUMB */
     text.innerText = "creating thumb...";
     const thumb = await createThumbnail(file);
     const thumbBlob = await (await fetch(thumb)).blob();
 
-    const { error:thumbErr } = await sb.storage
-      .from("thumbs")
-      .upload(name+".jpg", thumbBlob, {
-        contentType: "image/jpeg"
-      });
-
-    if(thumbErr) throw thumbErr;
+    await sb.storage.from("thumbs")
+    .upload(name+".jpg", thumbBlob,{
+      contentType:"image/jpeg"
+    });
 
     progress.value = 30;
 
-    /* VIDEO */
     text.innerText = "uploading video...";
-    const { error:videoErr } = await sb.storage
-      .from("videos")
-      .upload(name+".mp4", file, {
-        contentType: file.type || "video/mp4"
-      });
-
-    if(videoErr) throw videoErr;
+    await sb.storage.from("videos")
+    .upload(name+".mp4", file,{
+      contentType:file.type
+    });
 
     progress.value = 80;
 
-    /* URL */
     const videoUrl = sb.storage
-      .from("videos")
-      .getPublicUrl(name+".mp4").data.publicUrl;
+    .from("videos")
+    .getPublicUrl(name+".mp4").data.publicUrl;
 
     const thumbUrl = sb.storage
-      .from("thumbs")
-      .getPublicUrl(name+".jpg").data.publicUrl;
+    .from("thumbs")
+    .getPublicUrl(name+".jpg").data.publicUrl;
 
-    /* DB */
-    const { error:dbErr } = await sb
-      .from("videos")
-      .insert([{ video_url: videoUrl, thumb_url: thumbUrl }]);
-
-    if(dbErr) throw dbErr;
+    await sb.from("videos")
+    .insert([{ video_url: videoUrl, thumb_url: thumbUrl }]);
 
     progress.value = 100;
     text.innerText = "done";
@@ -271,57 +229,49 @@ async function handleUpload(file){
 
   }catch(err){
     console.error(err);
-    text.innerText = "error";
     alert("upload loi: "+err.message);
   }
 }
 
 /* VIEWER */
-const viewer = document.getElementById("viewer");
-const mainVideo = document.getElementById("mainVideo");
-
 function openViewer(i){
-  current=i;
-  viewer.style.display="flex";
-  mainVideo.src=videos[i].video_url;
+current=i;
+viewer.style.display="flex";
+mainVideo.style.display="block";
+mainVideo.src=videos[i].video_url;
 }
 
 function next(){
-  current=(current+1)%videos.length;
-  mainVideo.src=videos[current].video_url;
+current=(current+1)%videos.length;
+mainVideo.src=videos[current].video_url;
 }
 
 function prev(){
-  current=(current-1+videos.length)%videos.length;
-  mainVideo.src=videos[current].video_url;
+current=(current-1+videos.length)%videos.length;
+mainVideo.src=videos[current].video_url;
 }
 
 function closeViewer(){
-  mainVideo.pause();
-  viewer.style.display="none";
+mainVideo.pause();
+viewer.style.display="none";
 }
 
 /* SWIPE */
 let startX=0;
 
 viewer.addEventListener("touchstart",e=>{
-  startX=e.touches[0].clientX;
+startX=e.touches[0].clientX;
 });
 
 viewer.addEventListener("touchend",e=>{
-  let endX=e.changedTouches[0].clientX;
+let endX=e.changedTouches[0].clientX;
 
-  if(startX-endX>50) next();
-  if(endX-startX>50) prev();
+if(startX-endX>50) next();
+if(endX-startX>50) prev();
 });
 
 /* INIT */
 loadVideos();
-
-/* SW */
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register("service-worker.js");
-}
 
 /* DARKNESS */
 const overlay = document.getElementById("bg-overlay");
@@ -334,7 +284,7 @@ overlay.style.background = `rgba(0,0,0,${savedDark})`;
 slider.value = savedDark;
 
 slider.oninput = (e)=>{
-  let val = e.target.value;
-  overlay.style.background = `rgba(0,0,0,${val})`;
-  localStorage.setItem("darkness", val);
+let val = e.target.value;
+overlay.style.background = `rgba(0,0,0,${val})`;
+localStorage.setItem("darkness", val);
 };
