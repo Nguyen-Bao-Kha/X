@@ -1,15 +1,19 @@
+* {
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   margin: 0;
   background: #0a0a0a;
   color: white;
-  font-family: sans-serif;
-
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
-}
-body {
+  min-height: 100vh;
   position: relative;
   z-index: 0;
 }
@@ -21,9 +25,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 10000;
   animation: fadeOut 1s forwards;
   animation-delay: 2.5s;
+  pointer-events: none;
 }
 
 .logo span {
@@ -46,10 +51,16 @@ body {
   column-count: 4;
   column-gap: 10px;
   padding: 10px;
+  position: relative;
+  z-index: 2;
 }
 
-@media(max-width:900px){
+@media(max-width: 900px){
   .grid { column-count: 2; }
+}
+
+@media(max-width: 500px){
+  .grid { column-count: 2; gap: 8px; padding: 8px; }
 }
 
 .video-item {
@@ -57,175 +68,243 @@ body {
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
+  transition: transform 0.2s;
+  background: #1a1a1a;
 }
 
-.thumb {
-  width: 100%;
-  border-radius: 16px;
+.video-item:active {
+  transform: scale(0.98);
 }
 
-video {
+.thumb, .video-item video {
   width: 100%;
   border-radius: 16px;
   object-fit: cover;
+  display: block;
+  aspect-ratio: 16 / 9;
 }
 
 .btn {
   position: fixed;
   bottom: 20px;
-  width: 60px;
-  height: 60px;
-  background: #1f1f1f;
+  width: 56px;
+  height: 56px;
+  background: rgba(31, 31, 31, 0.9);
+  backdrop-filter: blur(10px);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
-  z-index: 50;
+  font-size: 24px;
+  z-index: 100;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
 }
 
-.upload { right: 20px; }
-.bg { right: 90px; }
+.btn:active {
+  transform: scale(0.92);
+  background: #2a2a2a;
+}
 
-.viewer {
+.upload { right: 20px; bottom: 20px; }
+.bg { right: 90px; bottom: 20px; }
+
+/* Video Viewer */
+#videoViewer {
   position: fixed;
   inset: 0;
   background: black;
   display: none;
   justify-content: center;
-  align-items: stretch;
+  align-items: center;
   flex-direction: column;
   z-index: 9999;
 }
 
-.viewer video {
+#videoViewer video {
   max-width: 90%;
   max-height: 75%;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
 }
 
 .nav {
   position: absolute;
   top: 50%;
-  font-size: 40px;
+  transform: translateY(-50%);
+  font-size: 48px;
+  padding: 20px;
+  cursor: pointer;
+  color: white;
+  text-shadow: 0 0 10px black;
+  z-index: 10;
 }
 
-.left { left: 0; }
-.right { right: 0; }
+.left { left: 10px; }
+.right { right: 10px; }
 
 .close {
   position: absolute;
-  top: 10px;
+  top: 20px;
   right: 20px;
-  font-size: 30px;
+  font-size: 32px;
+  cursor: pointer;
+  z-index: 10;
+  background: rgba(0,0,0,0.5);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* OVERLAY */
+#videoViewer input[type="range"] {
+  position: absolute;
+  bottom: 20px;
+  width: 200px;
+  z-index: 10;
+}
+
+/* Overlay */
 #bg-overlay {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.5);
   z-index: 1;
   pointer-events: none;
-  transition: background .2s;
+  transition: background 0.2s;
 }
 
-#uploadProgress{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:4px;
-z-index:9999;
+/* Progress */
+#uploadProgress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  z-index: 10001;
+  display: none;
+  appearance: none;
 }
-/* SLIDER */
+
+#uploadProgress::-webkit-progress-bar {
+  background: #333;
+}
+
+#uploadProgress::-webkit-progress-value {
+  background: #ff6b6b;
+}
+
+#uploadText {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.8);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  z-index: 10001;
+  display: none;
+}
+
+/* Brightness Control */
 .brightness-control {
   position: fixed;
   bottom: 100px;
   right: 20px;
   width: 120px;
-  z-index: 10;
-}
-
-.grid {
-  position: relative;
-  z-index: 2;
-}
-
-.viewer {
-  z-index: 20;
-}
-
-.brightness-control {
-  z-index: 30;
+  z-index: 100;
+  background: rgba(0,0,0,0.5);
+  padding: 8px 12px;
+  border-radius: 30px;
+  backdrop-filter: blur(4px);
 }
 
 .brightness-control input {
   width: 100%;
-}
-.upload { 
-right: 20px;
-bottom: 20px;
+  cursor: pointer;
 }
 
-.bg { 
-right: 90px;
-bottom: 20px;
-}
-/* OPTIONAL BLUR */
-#bg-overlay.blur {
-  backdrop-filter: blur(6px);
-}
-#cropModal{
-position:fixed;
-inset:0;
-background:black;
-display:none;
-z-index:99999;
-flex-direction:column;
+/* CROP MODAL - FIXED */
+#cropModal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.95);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 20000;
 }
 
-#cropImage{
-max-width:100%;
-max-height:80vh;
+#cropImage {
+  max-width: 95%;
+  max-height: 80vh;
+  display: block;
+  margin: auto;
 }
 
-.cropBtns{
-display:flex;
-gap:10px;
-justify-content:center;
-padding:10px;
-}
-#cropImg{
-width:100%;
-height:100%;
-object-fit:contain;
-}
-
-#cropImg{
-max-width:100%;
-max-height:100vh;
-display:block;
-}
-
-.viewer{
-position:fixed;
-inset:0;
-background:black;
-display:none;
-justify-content:center;
-align-items:center;
-flex-direction:column;
-z-index:9999;
+.close-crop {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 32px;
+  color: white;
+  cursor: pointer;
+  background: rgba(0,0,0,0.5);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20001;
 }
 
-.crop-ok{
-position:fixed;
-bottom:20px;
-left:50%;
-transform:translateX(-50%);
-padding:10px 20px;
-background:#111;
-color:white;
-border-radius:20px;
-z-index:99999;
+.cropBtns {
+  position: fixed;
+  bottom: 30px;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  z-index: 20001;
+}
+
+.crop-ok, .crop-cancel {
+  padding: 12px 28px;
+  font-size: 18px;
+  font-weight: bold;
+  border: none;
+  border-radius: 40px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.crop-ok {
+  background: #4caf50;
+  color: white;
+}
+
+.crop-cancel {
+  background: #f44336;
+  color: white;
+}
+
+.crop-ok:active, .crop-cancel:active {
+  transform: scale(0.96);
+}
+
+/* Volume slider */
+#volumeSlider {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
 }
