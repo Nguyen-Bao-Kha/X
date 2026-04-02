@@ -9,24 +9,81 @@ const bgInput = document.getElementById("bgInput");
 let videos = [];
 let current = 0;
 
-/* SPLASH */
+/* SPLASH 7 giây + SOUND */
 const splash = document.getElementById("splash");
 const splashSound = document.getElementById("splashSound");
 
-// cố gắng play âm thanh ngay
 function playSplashSound() {
     splashSound.play().catch(()=>{
-        // nếu browser chặn autoplay, click bất kỳ nơi nào sẽ play
         window.addEventListener("click", ()=>splashSound.play(), { once: true });
     });
 }
 
-// show splash 7 giây
 window.addEventListener("load", ()=>{
     splash.style.display = "flex";
     playSplashSound();
     setTimeout(()=>{ splash.style.display="none"; }, 7000);
 });
+
+/* RENDER + HOVER + XÓA */
+function render(){
+    grid.innerHTML = "";
+    videos.forEach((v,i)=>{
+        if(!v.thumb_url) return;
+        const div = document.createElement("div");
+        div.className = "video-item";
+
+        const img = document.createElement("img");
+        img.src = v.thumb_url;
+        img.className = "thumb";
+        img.loading = "lazy";
+        div.appendChild(img);
+
+        const delBtn = document.createElement("div");
+        delBtn.innerText = "✕";
+        delBtn.className = "delete-btn";
+        delBtn.style.display = "none";
+        delBtn.onclick = e=>{
+            e.stopPropagation();
+            // dùng đúng path trong bucket
+            const videoPath = v.video_url.split("/videos/")[1];
+            const thumbPath = v.thumb_url.split("/thumbs/")[1];
+            deleteVideo(v.id, videoPath, thumbPath);
+        };
+        div.appendChild(delBtn);
+
+        let preview;
+        div.onmouseenter = ()=>{
+            preview = document.createElement("video");
+            preview.src = v.video_url;
+            preview.muted = true;
+            preview.loop = true;
+            preview.autoplay = true;
+            div.replaceChild(preview, img);
+            delBtn.style.display = "flex";
+        };
+        div.onmouseleave = ()=>{
+            if(preview) preview.pause();
+            div.replaceChild(img, preview);
+            delBtn.style.display = "none";
+        };
+
+        div.onclick = ()=>openViewer(i);
+        grid.appendChild(div);
+    });
+}
+
+/* DELETE VIDEO chuẩn */
+async function deleteVideo(id, videoPath, thumbPath){
+    try {
+        await sb.storage.from("videos").remove([videoPath]);
+        await sb.storage.from("thumbs").remove([thumbPath]);
+        await sb.from("videos").delete().eq("id", id);
+        await loadVideos();
+    } catch(err){
+        console.error("Delete error:", err);
+    }
+}
 
 /* BACKGROUND */
 if(localStorage.getItem("bg")){
@@ -81,76 +138,7 @@ async function loadVideos(){
     render();
 }
 
-/* RENDER (nút xóa chỉ hiện khi hover) */
-function render(){
-    grid.innerHTML = "";
-    videos.forEach((v,i)=>{
-        if(!v.thumb_url) return;
-        const div = document.createElement("div");
-        div.className = "video-item";
 
-        // Thumbnail
-        const img = document.createElement("img");
-        img.src = v.thumb_url;
-        img.className = "thumb";
-        img.loading = "lazy";
-        div.appendChild(img);
-
-        // Hover preview video
-        let preview;
-        div.onmouseenter = ()=>{
-            preview = document.createElement("video");
-            preview.src = v.video_url;
-            preview.muted = true;
-            preview.loop = true;
-            preview.autoplay = true;
-            div.replaceChild(preview, img);
-
-            // Khi hover, show delete button
-            delBtn.style.display = "flex";
-        };
-        div.onmouseleave = ()=>{
-            if(preview) preview.pause();
-            div.replaceChild(img, preview);
-
-            // Khi rời, ẩn delete button
-            delBtn.style.display = "none";
-        };
-
-        // Nút xóa (ẩn mặc định)
-        const delBtn = document.createElement("div");
-        delBtn.innerText = "✕";
-        delBtn.className = "delete-btn";
-        delBtn.style.display = "none"; // ẩn mặc định
-        delBtn.onclick = (e)=>{
-            e.stopPropagation();
-            deleteVideo(v.id, v.video_url.split("/").pop(), v.thumb_url.split("/").pop());
-        };
-        div.appendChild(delBtn);
-
-        div.onclick = ()=>openViewer(i);
-        grid.appendChild(div);
-    });
-}
-
-/* XÓA VIDEO CHUẨN */
-async function deleteVideo(id, videoName, thumbName){
-    try {
-        // xóa video trong storage
-        await sb.storage.from("videos").remove([videoName]);
-
-        // xóa thumbnail
-        await sb.storage.from("thumbs").remove([thumbName]);
-
-        // xóa database
-        await sb.from("videos").delete().eq("id", id);
-
-        // reload danh sách
-        await loadVideos();
-    } catch(err){
-        console.error("Delete error:", err);
-    }
-}
 
 /* RETRY */
 async function retryUpload(fn,retries=3){
